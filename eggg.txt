@@ -1,0 +1,190 @@
+function b36e(numbera) {
+
+    if (!Number.isInteger(numbera)) {
+
+        throw new TypeError('number must be an integer');
+
+    }
+
+ 
+
+    const alphabet = '0123456789abcdefghijklmnopqrstuv';
+
+    let number = Math.abs(numbera);
+
+    let base36 = '';
+
+ 
+
+    while (number) {
+
+        const [quotient, remainder] = [Math.floor(number / 32), number % 32];
+
+        base36 = alphabet[remainder] + base36;
+
+        number = quotient;
+
+    }
+
+ 
+
+    return numbera < 0 ? '-' + base36 : base36 || alphabet[0];
+
+}
+
+ 
+
+function line(x1, y1, x2, y2) {
+
+    return `${b36e(x1)} ${b36e(y1)} ${b36e(x2)} ${b36e(y2)},`;
+
+}
+
+ 
+
+function pictolines(image, offset) {
+
+    console.log(`STATUS: Opening Image (${image})`);
+
+    const img = new Image();
+
+ 
+
+    img.crossOrigin = 'Anonymous';
+
+    img.src = image;
+
+ 
+
+    const canvas = document.createElement('canvas');
+
+    const ctx = canvas.getContext('2d');
+
+ 
+
+    img.onload = function () {
+
+        canvas.width = img.width;
+
+        canvas.height = img.height;
+
+ 
+
+        ctx.drawImage(img, 0, 0);
+
+ 
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+ 
+
+        let pout = '';
+
+        let sout = '';
+
+        const maxpix = canvas.width * canvas.height;
+
+        let pprog = 0;
+
+        let sprog = 0;
+
+ 
+
+        for (let x = 0; x < canvas.width; x++) {
+
+            for (let y = 0; y < canvas.height; y++) {
+
+                const color = imageData.data[(y * canvas.width + x) * 4];
+
+                const lineStr = line(x * 2 + offset[0], y * 2 + offset[1], x * 2 + 2 + offset[0], y * 2 + offset[1]);
+
+ 
+
+                if (color < 85) {
+
+                    pout += lineStr;
+
+                    pprog++;
+
+                    console.log(`1. (PHYSICS) ${pprog}/${maxpix} pixels converted.`);
+
+                } else if (color >= 85 && color < 170) {
+
+                    sout += lineStr;
+
+                    sprog++;
+
+                    console.log(`2. (SCENERY) ${sprog}/${maxpix} pixels converted.`);
+
+                }
+
+            }
+
+        }
+
+ 
+
+        console.log('STATUS: Saving File');
+
+        const datafile = document.createElement('a');
+
+        datafile.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(pout + '#' + sout + '#');
+
+        datafile.download = `${image}.txt`;
+
+        document.body.appendChild(datafile);
+
+        datafile.click();
+
+        document.body.removeChild(datafile);
+
+ 
+
+        console.log('SUMMARY:');
+
+        console.log(`1. Image Statistics:`);
+
+        console.log(`1.1. Image: ${image}`);
+
+        console.log(`1.2. Width: ${canvas.width}`);
+
+        console.log(`1.3. Height: ${canvas.height}`);
+
+        console.log(`2. Conversion Statistics:`);
+
+        console.log(`2.1. Physics Pixel Count: ${pprog}`);
+
+        console.log(`2.2. Scenery Pixel Count: ${sprog}`);
+
+        console.log(`2.3. Blank   Pixel Count: ${maxpix - (pprog + sprog)}`);
+
+        console.log(`2.4. Total   Pixel Count: ${maxpix}`);
+
+        console.log(`2.5. X-Offset: ${offset[0]}`);
+
+        console.log(`2.6. Y-Offset: ${offset[1]}`);
+
+        console.log(`3. Data Statistics:`);
+
+        console.log(`3.1. Saved to ${image}.txt`);
+
+        console.log(`3.2. File Size: ${pprog + sprog} bytes (${(pprog + sprog) * 8} bits, -8 for header)`);
+
+        console.log(`3.3. Character Count: ${pout.length + sout.length}`);
+
+    };
+
+}
+
+ 
+
+// Example usage in the Chrome console
+
+pictolines('https://images.app.goo.gl/MuMerynWyeQ5kNwd9', [0, 0]);
+
+
+
+
+ 
+
+ 
